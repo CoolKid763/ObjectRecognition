@@ -1,59 +1,99 @@
-img = "";
-status = "";
-objects = [];
+song1 = "";
+song2 = "";
 
-function preload(){
-    img = loadImage('dog_cat.jpg');
+song1_status = "";
+song2_status = "";
+
+scoreRightWrist = 0;
+scoreLeftWrist = 0;
+
+rightWristX = 0;
+rightWristY = 0;
+
+leftWristX = 0;
+leftWristY = 0;
+
+function preload()
+{
+	song1 = loadSound("music.mp3");
+	song2 = loadSound("TOP GUN ANTHEM(128 kbps).mp3");
 }
 
-function setup(){
-    canvas = createCanvas(640, 420);
-    canvas.center();
-    objectDetector = ml5.objectDetector('cocossd', modelLoaded);
-    document.getElementById("status").innerHTML = "Status : Detecting Objects";
+function setup() {
+	canvas =  createCanvas(600, 500);
+	canvas.center();
+
+	video = createCapture(VIDEO);
+	video.hide();
+
+	poseNet = ml5.poseNet(video, modelLoaded);
+	poseNet.on('pose', gotPoses);
 }
 
-function modelLoaded(){
-    console.log("Model Loaded!");
-    status = true;
-    objectDetector.detect(img, gotResult);
+function modelLoaded() {
+  console.log('PoseNet Is Initialized');
 }
 
-function gotResult(error, results){
-    if(error){
-        console.log(error);
-    }
-    console.log(results);
-    objects = results;
+function gotPoses(results)
+{
+  if(results.length > 0)
+  {
+	console.log(results);
+	scoreRightWrist =  results[0].pose.keypoints[10].score;
+	scoreLeftWrist =  results[0].pose.keypoints[9].score;
+	console.log("scoreRightWrist = " + scoreRightWrist + "scoreLeftWrist = " + scoreLeftWrist);
+	
+	rightWristX = results[0].pose.rightWrist.x;
+	rightWristY = results[0].pose.rightWrist.y;
+	console.log("rightWristX = " + rightWristX +" rightWristY = "+ rightWristY);
+
+	leftWristX = results[0].pose.leftWrist.x;
+	leftWristY = results[0].pose.leftWrist.y;
+	console.log("leftWristX = " + leftWristX +" leftWristY = "+ leftWristY);
+		
+  }
 }
 
+function draw() {
+	image(video, 0, 0, 600, 500);
+	
+	song1_status = song1.isPlaying();
+	song2_status = song2.isPlaying();
 
+	fill("#FF0000");
+	stroke("#FF0000");
 
-function draw(){
-    image(img, 0, 0, 640, 420);
+	if(scoreRightWrist > 0.2)
+	{ 
+		circle(rightWristX,rightWristY,20);
 
-    if(status != ""){
-        for(i = 0; 1 < objects.length; i++){
-            document.getElementById("status").innerHTML = "Status : Object Detected";
+			song2.stop();
 
-            fill("#FF0000");
-            percent = floor(objects[i].confidence * 100);
-            text(objects[i].label + "" + percent + "%", objects[i].x, objects[i].y);
-            noFill();
-            stroke("#FF0000");
-            rect(objects[i].x, objects[i].y, objects[i].width, objects[i].height)
+		if(song1_status == false)
+		{
+			song1.play();
+			document.getElementById("volume").innerHTML = "Playing - Relaxing Tune"
+		}
+	}
 
-        }
-    }
-    fill("#FF0000");
-    text("Dog", 45, 75);
-    noFill();
-    stroke("#FF0000");
-    rect(30, 60, 450, 350);
+	if(scoreLeftWrist > 0.2)
+	{
+		circle(leftWristX,leftWristY,20);
 
-    fill("#FF0000");
-    text("Cat", 320, 120);
-    noFill();
-    stroke("#FF0000");
-    rect(300, 90, 270, 320);
+			song1.stop();
+
+		if(song2_status == false)
+		{
+			song2.play();
+			document.getElementById("volume").innerHTML = "Playing - Top Gun Anthem"
+		}
+	}
+
+}
+
+function play()
+{
+	song.play();
+	song.setVolume(1);
+	song.rate(1);
 }
